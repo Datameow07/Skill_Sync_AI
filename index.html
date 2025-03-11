@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Counseling Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+
+
+    <div class="footer-container">
+        <img src="/static/IVIS_logo.png" alt="Pulse Logo" height="300" draggable="false">
+        <img src="/static/NIE_University.png" alt="IVIS Logo" height="100">
+        <img src="/static/PULSE_LOGO.png" alt="NIE University Logo" height="100">
+    </div>
+
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Career Counseling Assistant</h1>
+            <h4>Get personalized resume suggestions and interview tips</h4>
+        </header>
+
+        
+
+        <div class="form-container">
+            <div class="contact-info">
+                <h2>Our Goal</h2>
+                <p>Providing expert guidance on resumes and interview preparation tailored to your experience.</p>
+                <br>
+
+
+            </div>
+
+            <form id="adviceForm">
+                <div class="form-group">
+                    <label for="experience">Your Work Experience:</label>
+                    <input type="text" id="experience" name="experience" required placeholder="e.g., 5 years in software development, recent graduate">
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="career_goal">Career Goal:</label>
+                    <input type="text" id="career_goal" name="career_goal" required placeholder="e.g., Transition to management, Get a job in tech">
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="advice_type">Type of Advice:</label>
+                    <select id="advice_type" name="advice_type">
+                        <option value="resume" selected>Resume Suggestions</option>
+                        <option value="interview">Interview Tips</option>
+                    </select>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="tone">Advice Tone:</label>
+                    <select id="tone" name="tone">
+                        <option value="professional" selected>Professional</option>
+                        <option value="encouraging">Encouraging</option>
+                        <option value="practical">Practical</option>
+                    </select>
+                </div>
+                <br>
+                <button type="submit" id="generateBtn">Get Advice</button>
+            </form>
+        </div>
+
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            <h2>Your Personalized Advice</h2>
+            <div id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Generating suggestions...</p>
+            </div>
+            <div id="results">
+                <!-- Results will appear here -->
+            </div>
+            <button id="copyBtn">Copy to Clipboard</button>
+        </div>
+    </div>
+
+
+
+   <footer>
+        <p>Powered By: IVIS LABS</p>
+        <p>
+            Contact us at: 
+            <a href="mailto:support@example.com">support@example.com</a> | 
+            <a href="tel:+1234567890">+1 234-567-890</a>
+        </p>
+    </footer>
+
+    <script>
+        document.getElementById('adviceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const resultsContainer = document.getElementById('resultsContainer');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            resultsContainer.style.display = 'block';
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                results.innerHTML = formatResponseWithMarkdown(data.generated_advice);
+                
+            } catch (error) {
+                results.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const results = document.getElementById('results').innerText;
+            navigator.clipboard.writeText(results)
+                .then(() => {
+                    const copyBtn = document.getElementById('copyBtn');
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy to Clipboard';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        });
+        
+        function formatResponseWithMarkdown(text) {
+            if (!text) return "";
+            let formatted = text.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/#{1,6}\s+(.*?)(?:<br>|$)/g, '<h3>$1</h3>');
+            formatted = formatted.replace(/(\d+\.\s+)(.*?)(?:<br>|$)/g, '<div class="list-item"><span class="list-number">$1</span>$2</div>');
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            return formatted;
+        }
+    </script>
+</body>
+</html>
